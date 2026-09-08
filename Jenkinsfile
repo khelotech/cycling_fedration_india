@@ -1,7 +1,5 @@
 pipeline {
-    // agent {
-    //     label 'atom-dev'
-    // }
+
     agent any
 
     options {
@@ -9,6 +7,7 @@ pipeline {
     }
 
     environment {
+
         AWS_ACCOUNT_ID = "979699864122"
         AWS_DEFAULT_REGION = "ap-south-1"
 
@@ -23,85 +22,156 @@ pipeline {
 
         stage('Checkout Code') {
             steps {
-                checkout([$class: 'GitSCM',
-                    branches: [[name: '*/server_prod_env']],
+
+                checkout([
+                    $class: 'GitSCM',
+
+                    branches: [[
+                        name: '*/server_prod_env'
+                    ]],
+
                     userRemoteConfigs: [[
-                        //credentialsId: 'd10ac3f1-efba-4a5e-84f7-4537979f9093',
                         url: 'https://github.com/khelotech/cycling_fedration_india.git'
                     ]]
                 ])
             }
         }
 
+
         stage('Login to AWS ECR') {
             steps {
-               // withCredentials([[
-                 //   $class: 'AmazonWebServicesCredentialsBinding',
-                 //   credentialsId: 'aws-cred-usp'
-               // ]])
-                // {
-                   // sh '''
-                    //    aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | \
-                     //   docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
-                  //  '''
-                }
+
+                sh '''
+                    set -e
+
+                    echo "Checking AWS identity..."
+
+                    aws sts get-caller-identity
+
+                    echo "Logging into AWS ECR..."
+
+                    aws ecr get-login-password \
+                        --region ${AWS_DEFAULT_REGION} | \
+                    docker login \
+                        --username AWS \
+                        --password-stdin \
+                        ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
+
+                    echo "ECR login successful."
+                '''
             }
         }
 
+
         stage('Create .env File') {
             steps {
-                withCredentials([file(credentialsId: 'cycling_fedration_india', variable: 'SECRET_ENV_FILE')]) {
+
+                withCredentials([
+                    file(
+                        credentialsId: 'cycling_fedration_india',
+                        variable: 'SECRET_ENV_FILE'
+                    )
+                ]) {
+
                     sh '''
+                        set -e
+
                         echo "Removing old .env..."
+
                         rm -f .env
 
                         echo "Creating new .env..."
-                        cat "$SECRET_ENV_FILE" > .env
+
+                        cp "$SECRET_ENV_FILE" .env
 
                         chmod 600 .env
+
+                        echo ".env file created successfully"
                     '''
                 }
             }
         }
 
+
         stage('Build Docker Image') {
             steps {
+
                 sh '''
-                    docker build --no-cache \
-                    -t ${IMAGE_REPO_NAME}:${IMAGE_TAG} .
+                    set -e
+
+                    echo "Building Docker image..."
+
+                    docker build \
+                        --no-cache \
+                        -t ${IMAGE_REPO_NAME}:${IMAGE_TAG} .
+
+                    echo "Docker build completed."
                 '''
             }
         }
+
 
         stage('Push Docker Image to ECR') {
             steps {
+
                 sh '''
-                    docker tag ${IMAGE_REPO_NAME}:${IMAGE_TAG} ${IMAGE_NAME}
+                    set -e
+
+                    echo "Tagging Docker image..."
+
+                    docker tag \
+                        ${IMAGE_REPO_NAME}:${IMAGE_TAG} \
+                        ${IMAGE_NAME}
+
+                    echo "Pushing image to ECR..."
+
                     docker push ${IMAGE_NAME}
+
+                    echo "Docker image pushed successfully."
                 '''
             }
         }
+
 
         stage('Deploy Container') {
             steps {
+
                 sh '''
+                    set -e
+
+                    echo "Stopping old containers..."
+
                     docker-compose down || true
+
+                    echo "Pulling latest image..."
+
                     docker-compose pull
+
+                    echo "Starting containers..."
+
                     docker-compose up -d --force-recreate
+
+                    echo "Deployment completed."
                 '''
             }
         }
 
+
         stage('Cleanup') {
             steps {
+
                 sh '''
+                    echo "Cleaning unused Docker images..."
+
                     docker image prune -af
                 '''
             }
         }
     }
 
+
     post {
+
         success {
             echo 'Deployment completed successfully.'
         }
