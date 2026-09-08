@@ -1,0 +1,20 @@
+version: "3.8"
+
+services:
+
+  # Backend service
+  cycling_fedration_india:
+    image: 979699864122.dkr.ecr.ap-south-1.amazonaws.com/cycling_fedration_india:latest
+    container_name: cycling_fedration_india
+    working_dir: /app
+    ports:
+      - "5002:3000"
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - cycling_fedration_india_network
+
+networks:
+  cycling_fedration_india_network:
+    driver: bridge
