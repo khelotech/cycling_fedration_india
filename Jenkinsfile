@@ -26,7 +26,7 @@ pipeline {
                 checkout([$class: 'GitSCM',
                     branches: [[name: '*/server_prod_env']],
                     userRemoteConfigs: [[
-                        credentialsId: 'd10ac3f1-efba-4a5e-84f7-4537979f9093',
+                        //credentialsId: 'd10ac3f1-efba-4a5e-84f7-4537979f9093',
                         url: 'https://github.com/khelotech/cycling_fedration_india.git'
                     ]]
                 ])
