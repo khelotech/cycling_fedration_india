@@ -1,7 +1,8 @@
 pipeline {
-    agent {
-        label 'atom-dev'
-    }
+    // agent {
+    //     label 'atom-dev'
+    // }
+    agent any
 
     options {
         skipDefaultCheckout(true)
@@ -11,7 +12,7 @@ pipeline {
         AWS_ACCOUNT_ID = "979699864122"
         AWS_DEFAULT_REGION = "ap-south-1"
 
-        IMAGE_REPO_NAME = "atom_tms_frontend_dev"
+        IMAGE_REPO_NAME = "cycling_fedration_india"
         IMAGE_TAG = "latest"
 
         REPOSITORY_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}"
@@ -26,7 +27,7 @@ pipeline {
                     branches: [[name: '*/dev']],
                     userRemoteConfigs: [[
                         credentialsId: 'd10ac3f1-efba-4a5e-84f7-4537979f9093',
-                        url: 'https://khelotech1@bitbucket.org/HostAssrm/atom_tms_frontend.git'
+                        url: 'https://github.com/khelotech/cycling_fedration_india.git'
                     ]]
                 ])
             }
@@ -48,7 +49,7 @@ pipeline {
 
         stage('Create .env File') {
             steps {
-                withCredentials([file(credentialsId: 'atom_tms_frontend_dev_env', variable: 'SECRET_ENV_FILE')]) {
+                withCredentials([file(credentialsId: 'cycling_fedration_india', variable: 'SECRET_ENV_FILE')]) {
                     sh '''
                         echo "Removing old .env..."
                         rm -f .env
