@@ -73,7 +73,8 @@ RUN npm install
 
 COPY . .
 
-RUN npm run build
+# 👇 Ye line change kar
+RUN NODE_OPTIONS="--max-old-space-size=2048" npm run build
 
 EXPOSE 3000
 
